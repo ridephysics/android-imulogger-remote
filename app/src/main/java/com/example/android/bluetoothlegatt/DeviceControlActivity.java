@@ -17,21 +17,25 @@
 package com.example.android.bluetoothlegatt;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
@@ -54,7 +58,9 @@ public class DeviceControlActivity extends Activity {
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
     private TextView mConnectionState;
+    private Button mButtonChangeLogname;
     private Button mButtonActive;
+    private TextView mTVLogname;
 
     private String mDeviceName;
     private String mDeviceAddress;
@@ -65,6 +71,7 @@ public class DeviceControlActivity extends Activity {
 
     private BluetoothGattService mServiceIMU = null;
     private BluetoothGattCharacteristic mChrIMUActive = null;
+    private BluetoothGattCharacteristic mChrIMULogname = null;
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -104,7 +111,7 @@ public class DeviceControlActivity extends Activity {
         OFF,
     }
 
-    private void setupbuttonSetState(SetupButtonState s) {
+    private void setupButtonSetState(SetupButtonState s) {
         switch (s) {
             case UNKNOWN:
                 mButtonActive.setText(getString(R.string.unknown));
@@ -137,14 +144,42 @@ public class DeviceControlActivity extends Activity {
         }
     }
 
-    private void setupButtonActive() {
+    private void lognameSetText(String s) {
+        if (s != null) {
+            mTVLogname.setText(s);
+        }
+        else {
+            mTVLogname.setText(getString(R.string.unknown));
+        }
+    }
+
+    private void setupIMUActive() {
         try {
             mChrIMUActive = mServiceIMU.getCharacteristic(UUID.fromString(SampleGattAttributes.IMULOGGER_ACTIVE));
-            mBluetoothLeService.readCharacteristic(mChrIMUActive);
-            mBluetoothLeService.setCharacteristicNotification(mChrIMUActive, true);
+            if (!mBluetoothLeService.readCharacteristic(mChrIMUActive)) {
+                Log.e(TAG, "can't read chr-active");
+            }
+            if (!mBluetoothLeService.setCharacteristicNotification(mChrIMUActive, true)) {
+                Log.e(TAG, "can't enable chr-active notifications");
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            setupbuttonSetState(SetupButtonState.UNKNOWN);
+            setupButtonSetState(SetupButtonState.UNKNOWN);
+        }
+    }
+
+    private void setupIMULogname() {
+        try {
+            mChrIMULogname = mServiceIMU.getCharacteristic(UUID.fromString(SampleGattAttributes.IMULOGGER_LOGNAME));
+            if (!mBluetoothLeService.readCharacteristic(mChrIMULogname)) {
+                Log.e(TAG, "can't read chr-logname");
+            }
+            if (!mBluetoothLeService.setCharacteristicNotification(mChrIMULogname, true)) {
+                Log.e(TAG, "can't enable chr-logname notifications");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            lognameSetText(null);
         }
     }
 
@@ -171,8 +206,8 @@ public class DeviceControlActivity extends Activity {
                 List<BluetoothGattService> gattServices = mBluetoothLeService.getSupportedGattServices();
 
                 mServiceIMU = getGattService(gattServices, UUID.fromString(SampleGattAttributes.IMULOGGER_SERVICE));
-                setupButtonActive();
-
+                setupIMUActive();
+                setupIMULogname();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 try {
                     UUID uuidSvc = UUID.fromString(intent.getStringExtra(BluetoothLeService.EXTRA_SVC));
@@ -180,8 +215,11 @@ public class DeviceControlActivity extends Activity {
                     byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 
                     if (uuidSvc.equals(mServiceIMU.getUuid())) {
-                        if (uuidChr.equals(mChrIMUActive.getUuid())) {
-                            setupbuttonSetState(data[0] == 0x01 ? SetupButtonState.ON : SetupButtonState.OFF);
+                        if (mChrIMUActive != null && uuidChr.equals(mChrIMUActive.getUuid())) {
+                            setupButtonSetState(data[0] == 0x01 ? SetupButtonState.ON : SetupButtonState.OFF);
+                        }
+                        else if (mChrIMULogname != null && uuidChr.equals(mChrIMULogname.getUuid())) {
+                            lognameSetText(new String(data));
                         }
                     }
                 } catch (Exception e) {
@@ -192,7 +230,30 @@ public class DeviceControlActivity extends Activity {
     };
 
     private void clearUI() {
-        setupbuttonSetState(SetupButtonState.UNKNOWN);
+        setupButtonSetState(SetupButtonState.UNKNOWN);
+    }
+
+    private void showLognameDialog(Context c) {
+        final EditText editText = new EditText(c);
+
+        InputFilter[] filterArray = new InputFilter[1];
+        filterArray[0] = new InputFilter.LengthFilter(32);
+        editText.setFilters(filterArray);
+
+        AlertDialog dialog = new AlertDialog.Builder(c)
+                .setTitle("Set log name")
+                .setView(editText)
+                .setPositiveButton("Set", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String name = String.valueOf(editText.getText());
+                        mChrIMULogname.setValue(name.getBytes());
+                        mBluetoothLeService.writeCharacteristic(mChrIMULogname);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.show();
     }
 
     @Override
@@ -207,8 +268,17 @@ public class DeviceControlActivity extends Activity {
         // Sets up UI references.
         ((TextView) findViewById(R.id.device_address)).setText(mDeviceAddress);
         mConnectionState = (TextView) findViewById(R.id.connection_state);
+        mButtonChangeLogname = (Button) findViewById(R.id.button_change_logname);
+        mButtonChangeLogname.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showLognameDialog(DeviceControlActivity.this);
+            }
+        });
+        mTVLogname = (TextView) findViewById(R.id.logname);
+        lognameSetText(null);
         mButtonActive = (Button) findViewById(R.id.button_active);
-        setupbuttonSetState(SetupButtonState.UNKNOWN);
+        setupButtonSetState(SetupButtonState.UNKNOWN);
 
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);

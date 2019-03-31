@@ -17,6 +17,8 @@
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
     <string name="label_state">State:</string>
+    <string name="label_logname">Logname:</string>
+    <string name="change">CHG</string>
     <string name="no_data">No data</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
