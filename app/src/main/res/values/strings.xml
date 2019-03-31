@@ -33,4 +33,8 @@
     <string name="menu_disconnect">Disconnect</string>
     <string name="menu_scan">Scan</string>
     <string name="menu_stop">Stop</string>
+
+    <string name="unknown">UNKNOWN</string>
+    <string name="on">ON</string>
+    <string name="off">OFF</string>
 </resources>

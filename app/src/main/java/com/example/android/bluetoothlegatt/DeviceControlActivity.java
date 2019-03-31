@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
@@ -38,6 +39,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * For a given BLE device, this Activity provides the user interface to connect, display data,
@@ -52,7 +54,8 @@ public class DeviceControlActivity extends Activity {
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
     private TextView mConnectionState;
-    private TextView mDataField;
+    private Button mButtonActive;
+
     private String mDeviceName;
     private String mDeviceAddress;
     private ExpandableListView mGattServicesList;
@@ -64,6 +67,9 @@ public class DeviceControlActivity extends Activity {
 
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
+
+    private BluetoothGattService mServiceIMU = null;
+    private BluetoothGattCharacteristic mChrIMUActive = null;
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -85,6 +91,68 @@ public class DeviceControlActivity extends Activity {
         }
     };
 
+    private BluetoothGattService getGattService(List<BluetoothGattService> gattServices, UUID uuid) {
+        if (gattServices == null) return null;
+
+        for (BluetoothGattService gattService : gattServices) {
+            if (gattService.getUuid().equals(uuid)) {
+                return gattService;
+            }
+        }
+
+        return null;
+    }
+
+    enum SetupButtonState {
+        UNKNOWN,
+        ON,
+        OFF,
+    };
+    private void setupbuttonSetState(SetupButtonState s) {
+        switch (s) {
+            case UNKNOWN:
+                mButtonActive.setText(getString(R.string.unknown));
+                mButtonActive.setEnabled(false);
+                break;
+
+            case ON:
+                mButtonActive.setText(getString(R.string.on));
+                mButtonActive.setEnabled(true);
+                mButtonActive.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mChrIMUActive.setValue(new byte[] {0x00});
+                        mBluetoothLeService.writeCharacteristic(mChrIMUActive);
+                    }
+                });
+                break;
+
+            case OFF:
+                mButtonActive.setText(getString(R.string.off));
+                mButtonActive.setEnabled(true);
+                mButtonActive.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mChrIMUActive.setValue(new byte[] {0x01});
+                        mBluetoothLeService.writeCharacteristic(mChrIMUActive);
+                    }
+                });
+                break;
+        }
+    }
+
+    private void setupButtonActive() {
+        try {
+            mChrIMUActive = mServiceIMU.getCharacteristic(UUID.fromString(SampleGattAttributes.IMULOGGER_ACTIVE));
+            mBluetoothLeService.readCharacteristic(mChrIMUActive);
+            mBluetoothLeService.setCharacteristicNotification(mChrIMUActive, true);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            setupbuttonSetState(SetupButtonState.UNKNOWN);
+        }
+    }
+
     // Handles various events fired by the Service.
     // ACTION_GATT_CONNECTED: connected to a GATT server.
     // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
@@ -105,10 +173,28 @@ public class DeviceControlActivity extends Activity {
                 invalidateOptionsMenu();
                 clearUI();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                List<BluetoothGattService> gattServices = mBluetoothLeService.getSupportedGattServices();
+
                 // Show all the supported services and characteristics on the user interface.
-                displayGattServices(mBluetoothLeService.getSupportedGattServices());
+                displayGattServices(gattServices);
+
+                mServiceIMU = getGattService(gattServices, UUID.fromString(SampleGattAttributes.IMULOGGER_SERVICE));
+                setupButtonActive();
+
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                try {
+                    UUID uuidSvc = UUID.fromString(intent.getStringExtra(BluetoothLeService.EXTRA_SVC));
+                    UUID uuidChr = UUID.fromString(intent.getStringExtra(BluetoothLeService.EXTRA_CHR));
+                    byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+
+                    if (uuidSvc.equals(mServiceIMU.getUuid())) {
+                        if (uuidChr.equals(mChrIMUActive.getUuid())) {
+                            setupbuttonSetState(data[0]==0x01 ? SetupButtonState.ON : SetupButtonState.OFF);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     };
@@ -149,7 +235,7 @@ public class DeviceControlActivity extends Activity {
 
     private void clearUI() {
         mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
-        mDataField.setText(R.string.no_data);
+        setupbuttonSetState(SetupButtonState.UNKNOWN);
     }
 
     @Override
@@ -166,7 +252,8 @@ public class DeviceControlActivity extends Activity {
         mGattServicesList = (ExpandableListView) findViewById(R.id.gatt_services_list);
         mGattServicesList.setOnChildClickListener(servicesListClickListner);
         mConnectionState = (TextView) findViewById(R.id.connection_state);
-        mDataField = (TextView) findViewById(R.id.data_value);
+        mButtonActive = (Button) findViewById(R.id.button_active);
+        setupbuttonSetState(SetupButtonState.UNKNOWN);
 
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -233,12 +320,6 @@ public class DeviceControlActivity extends Activity {
                 mConnectionState.setText(resourceId);
             }
         });
-    }
-
-    private void displayData(String data) {
-        if (data != null) {
-            mDataField.setText(data);
-        }
     }
 
     // Demonstrates how to iterate through the supported GATT Services/Characteristics.

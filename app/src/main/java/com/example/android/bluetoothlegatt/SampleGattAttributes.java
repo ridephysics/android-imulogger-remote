@@ -23,11 +23,12 @@ import java.util.HashMap;
  */
 public class SampleGattAttributes {
     private static HashMap<String, String> attributes = new HashMap();
+    public static String IMULOGGER_SERVICE = "12345678-1234-5678-1234-56789abcdef0";
     public static String IMULOGGER_ACTIVE = "12345678-1234-5678-1234-56789abcdef1";
 
     static {
         // Sample Services.
-        attributes.put("12345678-1234-5678-1234-56789abcdef0", "IMU logger service");
+        attributes.put(IMULOGGER_SERVICE, "IMU logger service");
         // Sample Characteristics.
         attributes.put(IMULOGGER_ACTIVE, "active");
     }

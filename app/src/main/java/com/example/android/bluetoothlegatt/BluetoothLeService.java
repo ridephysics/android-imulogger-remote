@@ -60,6 +60,10 @@ public class BluetoothLeService extends Service {
             "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
+    public final static String EXTRA_SVC =
+            "com.example.bluetooth.le.EXTRA_SVC";
+    public final static String EXTRA_CHR =
+            "com.example.bluetooth.le.EXTRA_CHR";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
@@ -102,12 +106,25 @@ public class BluetoothLeService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
+            else {
+                Log.d(TAG, "read failed");
+            }
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            }
+            else {
+                Log.d(TAG, "write failed");
+            }
         }
     };
 
@@ -119,14 +136,13 @@ public class BluetoothLeService extends Service {
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-
         final byte[] data = characteristic.getValue();
-        if (data != null && data.length > 0) {
-            final StringBuilder stringBuilder = new StringBuilder(data.length);
-            for(byte byteChar : data)
-                stringBuilder.append(String.format("%02X ", byteChar));
-            intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-        }
+
+        intent.putExtra(EXTRA_SVC, characteristic.getService().getUuid().toString());
+        intent.putExtra(EXTRA_CHR, characteristic.getUuid().toString());
+
+        if (data != null)
+            intent.putExtra(EXTRA_DATA, data);
 
         sendBroadcast(intent);
     }
@@ -259,6 +275,14 @@ public class BluetoothLeService extends Service {
             return;
         }
         mBluetoothGatt.readCharacteristic(characteristic);
+    }
+
+    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return false;
+        }
+        return mBluetoothGatt.writeCharacteristic(characteristic);
     }
 
     /**
