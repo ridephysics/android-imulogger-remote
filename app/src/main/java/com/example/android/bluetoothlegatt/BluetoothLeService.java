@@ -32,6 +32,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,6 +48,7 @@ public class BluetoothLeService extends Service {
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
+    private final List<BluetoothGattCharacteristic> mCharacteristicsToRead = new ArrayList<>();
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -103,6 +105,16 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
+            synchronized (mCharacteristicsToRead) {
+                mCharacteristicsToRead.remove(mCharacteristicsToRead.get(0));
+
+                if (mCharacteristicsToRead.size() > 0) {
+                    if (!mBluetoothGatt.readCharacteristic(mCharacteristicsToRead.get(0))) {
+                        Log.e(TAG, "(async) can't read next characteristic");
+                    }
+                }
+            }
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             } else {
@@ -266,12 +278,24 @@ public class BluetoothLeService extends Service {
      *
      * @param characteristic The characteristic to read from.
      */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+    public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
+            return false;
         }
-        mBluetoothGatt.readCharacteristic(characteristic);
+
+        synchronized (mCharacteristicsToRead) {
+            mCharacteristicsToRead.add(characteristic);
+
+            if (mCharacteristicsToRead.size() == 1) {
+                if (!mBluetoothGatt.readCharacteristic(mCharacteristicsToRead.get(0))) {
+                    Log.e(TAG, "(sync) can't read next characteristic");
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic) {
