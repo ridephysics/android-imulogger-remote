@@ -109,8 +109,6 @@ public class DeviceControlActivity extends Activity {
         OFF,
     }
 
-    ;
-
     private void setupbuttonSetState(SetupButtonState s) {
         switch (s) {
             case UNKNOWN:
