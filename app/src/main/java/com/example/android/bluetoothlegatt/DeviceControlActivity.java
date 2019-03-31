@@ -107,7 +107,10 @@ public class DeviceControlActivity extends Activity {
         UNKNOWN,
         ON,
         OFF,
-    };
+    }
+
+    ;
+
     private void setupbuttonSetState(SetupButtonState s) {
         switch (s) {
             case UNKNOWN:
@@ -121,7 +124,7 @@ public class DeviceControlActivity extends Activity {
                 mButtonActive.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        mChrIMUActive.setValue(new byte[] {0x00});
+                        mChrIMUActive.setValue(new byte[]{0x00});
                         mBluetoothLeService.writeCharacteristic(mChrIMUActive);
                     }
                 });
@@ -133,7 +136,7 @@ public class DeviceControlActivity extends Activity {
                 mButtonActive.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        mChrIMUActive.setValue(new byte[] {0x01});
+                        mChrIMUActive.setValue(new byte[]{0x01});
                         mBluetoothLeService.writeCharacteristic(mChrIMUActive);
                     }
                 });
@@ -146,8 +149,7 @@ public class DeviceControlActivity extends Activity {
             mChrIMUActive = mServiceIMU.getCharacteristic(UUID.fromString(SampleGattAttributes.IMULOGGER_ACTIVE));
             mBluetoothLeService.readCharacteristic(mChrIMUActive);
             mBluetoothLeService.setCharacteristicNotification(mChrIMUActive, true);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             setupbuttonSetState(SetupButtonState.UNKNOWN);
         }
@@ -189,7 +191,7 @@ public class DeviceControlActivity extends Activity {
 
                     if (uuidSvc.equals(mServiceIMU.getUuid())) {
                         if (uuidChr.equals(mChrIMUActive.getUuid())) {
-                            setupbuttonSetState(data[0]==0x01 ? SetupButtonState.ON : SetupButtonState.OFF);
+                            setupbuttonSetState(data[0] == 0x01 ? SetupButtonState.ON : SetupButtonState.OFF);
                         }
                     }
                 } catch (Exception e) {
@@ -231,7 +233,7 @@ public class DeviceControlActivity extends Activity {
                     }
                     return false;
                 }
-    };
+            };
 
     private void clearUI() {
         mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
@@ -299,7 +301,7 @@ public class DeviceControlActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
+        switch (item.getItemId()) {
             case R.id.menu_connect:
                 mBluetoothLeService.connect(mDeviceAddress);
                 return true;
@@ -369,12 +371,12 @@ public class DeviceControlActivity extends Activity {
                 this,
                 gattServiceData,
                 android.R.layout.simple_expandable_list_item_2,
-                new String[] {LIST_NAME, LIST_UUID},
-                new int[] { android.R.id.text1, android.R.id.text2 },
+                new String[]{LIST_NAME, LIST_UUID},
+                new int[]{android.R.id.text1, android.R.id.text2},
                 gattCharacteristicData,
                 android.R.layout.simple_expandable_list_item_2,
-                new String[] {LIST_NAME, LIST_UUID},
-                new int[] { android.R.id.text1, android.R.id.text2 }
+                new String[]{LIST_NAME, LIST_UUID},
+                new int[]{android.R.id.text1, android.R.id.text2}
         );
         mGattServicesList.setAdapter(gattServiceAdapter);
     }
