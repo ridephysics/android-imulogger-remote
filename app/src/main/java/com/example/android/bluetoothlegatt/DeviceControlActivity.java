@@ -27,6 +27,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.InputFilter;
@@ -37,6 +38,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.LinearLayout;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
@@ -57,6 +59,7 @@ public class DeviceControlActivity extends Activity {
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
+    private LinearLayout mLayoutMain;
     private TextView mConnectionState;
     private Button mButtonChangeLogname;
     private Button mButtonActive;
@@ -116,11 +119,13 @@ public class DeviceControlActivity extends Activity {
             case UNKNOWN:
                 mButtonActive.setText(getString(R.string.unknown));
                 mButtonActive.setEnabled(false);
+                mLayoutMain.setBackgroundColor(Color.TRANSPARENT);
                 break;
 
             case ON:
                 mButtonActive.setText(getString(R.string.on));
                 mButtonActive.setEnabled(true);
+                mLayoutMain.setBackgroundColor(Color.parseColor("#ccff90"));
                 mButtonActive.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -133,6 +138,7 @@ public class DeviceControlActivity extends Activity {
             case OFF:
                 mButtonActive.setText(getString(R.string.off));
                 mButtonActive.setEnabled(true);
+                mLayoutMain.setBackgroundColor(Color.parseColor("#f28b82"));
                 mButtonActive.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -266,6 +272,7 @@ public class DeviceControlActivity extends Activity {
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
 
         // Sets up UI references.
+        mLayoutMain = (LinearLayout)findViewById(R.id.main);
         ((TextView) findViewById(R.id.device_address)).setText(mDeviceAddress);
         mConnectionState = (TextView) findViewById(R.id.connection_state);
         mButtonChangeLogname = (Button) findViewById(R.id.button_change_logname);
