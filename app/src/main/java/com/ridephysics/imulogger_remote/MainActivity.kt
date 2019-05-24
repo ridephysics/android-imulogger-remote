@@ -54,18 +54,20 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        val connectOptions = MqttConnectOptions()
-        connectOptions .setAutomaticReconnect(true)
-        connectOptions .setCleanSession(true)
+        val connectOptions = MqttConnectOptions().apply {
+            setAutomaticReconnect(true)
+            setCleanSession(true)
+        }
 
         try {
             mClient!!.connect(connectOptions, null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
-                    val disconnectedBufferOptions = DisconnectedBufferOptions()
-                    disconnectedBufferOptions.setBufferEnabled(true)
-                    disconnectedBufferOptions.setBufferSize(100)
-                    disconnectedBufferOptions.setPersistBuffer(false)
-                    disconnectedBufferOptions.setDeleteOldestMessages(false)
+                    val disconnectedBufferOptions = DisconnectedBufferOptions().apply {
+                        setBufferEnabled(true)
+                        setBufferSize(100)
+                        setPersistBuffer(false)
+                        setDeleteOldestMessages(false)
+                    }
                     mClient!!.setBufferOpts(disconnectedBufferOptions);
                     subscribeToTopic()
                 }
@@ -108,8 +110,9 @@ class MainActivity : AppCompatActivity() {
 
     fun publishMessage() {
         try {
-            val msg = MqttMessage()
-            msg.payload = publishMessage.toByteArray()
+            val msg = MqttMessage().apply {
+                payload = publishMessage.toByteArray()
+            }
             mClient!!.publish(publishTopic, msg)
             Log.i("IMULOGGER", "message published")
 
