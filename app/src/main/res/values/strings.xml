@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">IMULogger Remote</string>
+    <string name="action_settings">Settings</string>
+</resources>
