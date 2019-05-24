@@ -3,12 +3,22 @@ package com.ridephysics.imulogger_remote
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 
 import kotlinx.android.synthetic.main.activity_main.*
+import org.eclipse.paho.android.service.MqttAndroidClient
+import org.eclipse.paho.client.mqttv3.*
 
 class MainActivity : AppCompatActivity() {
+    val serverUri = "tcp://iot.eclipse.org:1883"
+    val clientId = "ExampleAndroidClient"
+    val subscriptionTopic = "exampleAndroidTopic"
+    val publishTopic = "exampleAndroidPublishTopic"
+    val publishMessage = "Hello World!"
+
+    var mClient:MqttAndroidClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,8 +26,99 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            publishMessage()
+        }
+
+        mClient = MqttAndroidClient(applicationContext, serverUri, clientId)
+        mClient!!.setCallback(object: MqttCallbackExtended {
+            override fun connectComplete(reconnect: Boolean, serverURI: String?) {
+                if (reconnect) {
+                    Log.i("IMULOGGER", "Reconnected to $serverURI")
+                    subscribeToTopic()
+                }
+                else {
+                    Log.i("IMULOGGER", "Connected to $serverURI")
+                }
+            }
+
+            override fun connectionLost(cause: Throwable?) {
+                Log.i("IMULOGGER", "The connection was lost")
+            }
+
+            override fun messageArrived(topic: String?, message: MqttMessage?) {
+                Log.i("IMULOGGER", "Incoming message: ${String(message!!.payload)}")
+            }
+
+            override fun deliveryComplete(token: IMqttDeliveryToken?) {
+
+            }
+        })
+
+        val connectOptions = MqttConnectOptions()
+        connectOptions .setAutomaticReconnect(true)
+        connectOptions .setCleanSession(true)
+
+        try {
+            mClient!!.connect(connectOptions, null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    val disconnectedBufferOptions = DisconnectedBufferOptions()
+                    disconnectedBufferOptions.setBufferEnabled(true)
+                    disconnectedBufferOptions.setBufferSize(100)
+                    disconnectedBufferOptions.setPersistBuffer(false)
+                    disconnectedBufferOptions.setDeleteOldestMessages(false)
+                    mClient!!.setBufferOpts(disconnectedBufferOptions);
+                    subscribeToTopic()
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.i("IMULOGGER", "Failed to connect to: $serverUri")
+                }
+
+            })
+        }
+        catch (e:MqttException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun subscribeToTopic() {
+        try {
+            mClient!!.subscribe(subscriptionTopic, 0, null, object: IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.i("IMULOGGER", "subscribed")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.i("IMULOGGER", "failed to subscribe")
+                }
+
+            })
+
+            mClient!!.subscribe(subscriptionTopic, 0, object: IMqttMessageListener {
+                override fun messageArrived(topic: String?, message: MqttMessage?) {
+                    Log.i("IMULOGGER", "Message: $topic : ${String(message!!.payload)}")
+                }
+
+            })
+        }
+        catch (e:MqttException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun publishMessage() {
+        try {
+            val msg = MqttMessage()
+            msg.payload = publishMessage.toByteArray()
+            mClient!!.publish(publishTopic, msg)
+            Log.i("IMULOGGER", "message published")
+
+            if (!mClient!!.isConnected()) {
+                Log.i("IMULOGGER", "${mClient!!.bufferedMessageCount} messages in buffer")
+            }
+        }
+        catch (e:MqttException) {
+            e.printStackTrace()
         }
     }
 
