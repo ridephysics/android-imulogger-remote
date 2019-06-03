@@ -1,10 +1,13 @@
 package com.ridephysics.imulogger_remote
 
 import android.content.Context
+import android.graphics.Color
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -23,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private var mClient:MqttAndroidClient? = null
     private var mServiceName: String? = null
     private var mNdsManager: NsdManager? = null
+    private var mHistoryAdapter: HistoryAdapter? = null
 
     private val registrationListener = object : NsdManager.RegistrationListener {
 
@@ -31,15 +35,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-            Log.e("IMULOGGER", "mDNS registration failed: $errorCode")
+            loge("mDNS registration failed: $errorCode")
         }
 
         override fun onServiceUnregistered(arg0: NsdServiceInfo) {
-            Log.e("IMULOGGER", "mDNS service unregistered")
+            loge("mDNS service unregistered")
         }
 
         override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-            Log.e("IMULOGGER", "mDNS unregistration failed: $errorCode")
+            loge("mDNS unregistration failed: $errorCode")
         }
     }
 
@@ -63,6 +67,12 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         registerService()
 
+        val recyclerView = findViewById<RecyclerView>(R.id.history)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        mHistoryAdapter = HistoryAdapter()
+        recyclerView.adapter = mHistoryAdapter
+
         fab.setOnClickListener { view ->
             publishMessage()
         }
@@ -71,20 +81,22 @@ class MainActivity : AppCompatActivity() {
         mClient!!.setCallback(object: MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String?) {
                 if (reconnect) {
-                    Log.i("IMULOGGER", "Reconnected to $serverURI")
+                    log("Reconnected to $serverURI")
                     subscribeToTopic()
                 }
                 else {
-                    Log.i("IMULOGGER", "Connected to $serverURI")
+                    log("Connected to $serverURI")
                 }
             }
 
             override fun connectionLost(cause: Throwable?) {
-                Log.i("IMULOGGER", "The connection was lost")
+                loge("The connection was lost")
+                if (cause != null)
+                    loge(Log.getStackTraceString(cause))
             }
 
             override fun messageArrived(topic: String?, message: MqttMessage?) {
-                Log.i("IMULOGGER", "Incoming message: ${String(message!!.payload)}")
+                log("Incoming message: ${String(message!!.payload)}")
             }
 
             override fun deliveryComplete(token: IMqttDeliveryToken?) {
@@ -106,18 +118,22 @@ class MainActivity : AppCompatActivity() {
                         setPersistBuffer(false)
                         setDeleteOldestMessages(false)
                     }
-                    mClient!!.setBufferOpts(disconnectedBufferOptions);
+                    mClient!!.setBufferOpts(disconnectedBufferOptions)
                     subscribeToTopic()
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                    Log.i("IMULOGGER", "Failed to connect to: $serverUri")
+                    loge("Failed to connect to: $serverUri")
+                    if (exception != null)
+                        loge(Log.getStackTraceString(exception))
+
                 }
 
             })
         }
         catch (e:MqttException) {
             e.printStackTrace()
+            loge(Log.getStackTraceString(e))
         }
     }
 
@@ -125,24 +141,27 @@ class MainActivity : AppCompatActivity() {
         try {
             mClient!!.subscribe(subscriptionTopic, 0, null, object: IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
-                    Log.i("IMULOGGER", "subscribed")
+                    log("subscribed")
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                    Log.i("IMULOGGER", "failed to subscribe")
+                    loge("failed to subscribe")
+                    if (exception != null)
+                        loge(Log.getStackTraceString(exception))
                 }
 
             })
 
             mClient!!.subscribe(subscriptionTopic, 0, object: IMqttMessageListener {
                 override fun messageArrived(topic: String?, message: MqttMessage?) {
-                    Log.i("IMULOGGER", "Message: $topic : ${String(message!!.payload)}")
+                    log("Message: $topic : ${String(message!!.payload)}")
                 }
 
             })
         }
         catch (e:MqttException) {
             e.printStackTrace()
+            loge(Log.getStackTraceString(e))
         }
     }
 
@@ -152,14 +171,15 @@ class MainActivity : AppCompatActivity() {
                 payload = publishMessage.toByteArray()
             }
             mClient!!.publish(publishTopic, msg)
-            Log.i("IMULOGGER", "message published")
+            log("message published")
 
-            if (!mClient!!.isConnected()) {
-                Log.i("IMULOGGER", "${mClient!!.bufferedMessageCount} messages in buffer")
+            if (!mClient!!.isConnected) {
+                log("${mClient!!.bufferedMessageCount} messages in buffer")
             }
         }
         catch (e:MqttException) {
             e.printStackTrace()
+            loge(Log.getStackTraceString(e))
         }
     }
 
@@ -177,5 +197,34 @@ class MainActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun aloglevel(level: Int, text: String) {
+        val tag = "IMULOGGER"
+        when(level) {
+            Log.ERROR -> Log.e(tag, text)
+            Log.WARN -> Log.w(tag, text)
+            else -> Log.i(tag, text)
+        }
+    }
+
+    private fun log(text: String, level:Int = Log.INFO) {
+        aloglevel(level, text)
+
+        val color = when(level) {
+            Log.ERROR -> Color.parseColor("#F44336")
+            Log.WARN -> Color.parseColor("#FFEB3B")
+            else -> Color.WHITE
+        }
+
+        runOnUiThread({ mHistoryAdapter?.add(text, color) })
+    }
+
+    private fun loge(text: String) {
+        log(text, Log.ERROR)
+    }
+
+    private fun logw(text: String) {
+        log(text, Log.WARN)
     }
 }
