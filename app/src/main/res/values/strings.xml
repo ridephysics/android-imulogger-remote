@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">IMULogger Remote</string>
     <string name="action_filename">Filename</string>
+    <string name="action_refresh">Refresh</string>
 </resources>

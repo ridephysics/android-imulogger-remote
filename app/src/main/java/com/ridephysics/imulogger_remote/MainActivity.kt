@@ -347,6 +347,10 @@ class MainActivity : AppCompatActivity() {
 
                 true
             }
+            R.id.action_refresh -> {
+                mqttsend_fullreport();
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
