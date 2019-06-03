@@ -17,11 +17,11 @@ import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 
 class MainActivity : AppCompatActivity() {
-    val serverUri = "tcp://localhost:1883"
-    val clientId = "imulogger-android-remote"
-    val subscriptionTopic = "/imulogger/status"
-    val publishTopic = "/imulogger/ctrl"
-    val publishMessage = "Hello World!"
+    private val serverUri = "tcp://localhost:1883"
+    private val clientId = "imulogger-android-remote"
+    private val subscriptionTopic = "/imulogger/status"
+    private val publishTopic = "/imulogger/ctrl"
+    private val publishMessage = "Hello World!"
 
     private var mClient:MqttAndroidClient? = null
     private var mServiceName: String? = null
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun registerService() {
+    private fun registerService() {
         // we're running a mosquitto mqtt broker inside Termux
         // let this app advertize it to the network
         val serviceInfo = NsdServiceInfo().apply {
@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun publishMessage() {
+    private fun publishMessage() {
         try {
             val msg = MqttMessage().apply {
                 payload = publishMessage.toByteArray()
