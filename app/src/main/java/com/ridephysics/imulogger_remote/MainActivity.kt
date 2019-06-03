@@ -17,6 +17,9 @@ import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
+import android.support.v7.app.AlertDialog
+import android.widget.LinearLayout
+import android.widget.EditText
 
 @ExperimentalUnsignedTypes
 class MainActivity : AppCompatActivity() {
@@ -258,6 +261,10 @@ class MainActivity : AppCompatActivity() {
         mqttsend_raw(byteArrayOf(IMUCmd.FULLREPORT.cmd.toByte()))
     }
 
+    private fun mqttsend_filename(name: String) {
+        mqttsend_raw(byteArrayOf(IMUCmd.FILENAME.cmd.toByte()) + name.toByteArray())
+    }
+
     private fun mqttsend_enabled(enabled : Boolean) {
         mqttsend_raw(byteArrayOf(IMUCmd.FULLREPORT.cmd.toByte(), if (enabled) 0x01 else 0x00))
     }
@@ -298,7 +305,31 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
+            R.id.action_filename -> {
+                val alertDialog = AlertDialog.Builder(this@MainActivity).create()
+
+                val input = EditText(this@MainActivity)
+                input.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
+                )
+
+                alertDialog.apply {
+                    setTitle("Filename")
+                    setMessage("Enter the new filename")
+                    setView(input)
+                    setButton(AlertDialog.BUTTON_NEGATIVE, "CANCEL") { dialog, which -> run {
+                        dialog.dismiss()
+                    }}
+                    setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, which -> run {
+                        mqttsend_filename(input.text.toString())
+                        dialog.dismiss()
+                    }}
+                    show()
+                }
+
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
