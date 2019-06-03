@@ -13,5 +13,6 @@
             android:textColor="#ffffff"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
-            android:fontFamily="monospace"/>
+            android:fontFamily="monospace"
+            android:textStyle="bold"/>
 </android.support.constraint.ConstraintLayout>

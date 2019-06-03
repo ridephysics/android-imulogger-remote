@@ -1,7 +1,6 @@
 package com.ridephysics.imulogger_remote;
 
 import android.graphics.Color
-import android.graphics.Typeface
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -40,10 +39,6 @@ class HistoryAdapter(private val history: ArrayList<HistoryItem> = ArrayList()) 
         val item = history[position]
         holder.mTextView.text = item.text
         holder.mTextView.setTextColor(item.color)
-
-        if (item.color != Color.WHITE) {
-            holder.mTextView.setTypeface(holder.mTextView.typeface, Typeface.BOLD)
-        }
     }
 
     override fun getItemCount(): Int {
