@@ -11,22 +11,44 @@ import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ViewGroup
+import android.widget.TextView
 
 import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 
+@ExperimentalUnsignedTypes
 class MainActivity : AppCompatActivity() {
     private val serverUri = "tcp://localhost:1883"
     private val clientId = "imulogger-android-remote"
     private val subscriptionTopic = "/imulogger/status"
     private val publishTopic = "/imulogger/ctrl"
-    private val publishMessage = "Hello World!"
 
     private var mClient:MqttAndroidClient? = null
     private var mServiceName: String? = null
     private var mNdsManager: NsdManager? = null
     private var mHistoryAdapter: HistoryAdapter? = null
+    private var mTvStatus: TextView? = null
+    private var mTvFilename: TextView? = null
+
+    enum class IMUCmd(val cmd: UByte) {
+        FULLREPORT(0x00u),
+        FILENAME(0x01u),
+        ENABLED(0x02u),
+        IMUSTATUS(0x03u),
+    }
+
+    enum class IMUStatus(val v: UByte) {
+        STANDBY(0x01u),
+        SLOW(0x02u),
+        STILLNESS(0x04u),
+        STABLE(0x08u),
+        TRANSIENT(0x10u),
+        UNRELIABLE(0x20u),
+        R1(0x40u),
+        R2(0x80u),
+    }
 
     private val registrationListener = object : NsdManager.RegistrationListener {
 
@@ -61,11 +83,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupStatusInfo(id: Int, label: String): TextView {
+        val vg = findViewById<ViewGroup>(id)
+        val tv_label = vg.findViewById<TextView>(R.id.label)
+        val tv_text = vg.findViewById<TextView>(R.id.text)
+
+        tv_label.text = label + ": "
+        tv_text.text = "unknown"
+
+        return tv_text
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
         registerService()
+
+        mTvStatus = setupStatusInfo(R.id.status, "Status")
+        mTvFilename = setupStatusInfo(R.id.filename, "Filename")
 
         val recyclerView = findViewById<RecyclerView>(R.id.history)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -74,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = mHistoryAdapter
 
         fab.setOnClickListener { view ->
-            publishMessage()
+            //publishMessage()
         }
 
         mClient = MqttAndroidClient(applicationContext, serverUri, clientId)
@@ -82,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             override fun connectComplete(reconnect: Boolean, serverURI: String?) {
                 if (reconnect) {
                     log("Reconnected to $serverURI")
-                    subscribeToTopic()
+                    onConnected()
                 }
                 else {
                     log("Connected to $serverURI")
@@ -119,7 +155,7 @@ class MainActivity : AppCompatActivity() {
                         setDeleteOldestMessages(false)
                     }
                     mClient!!.setBufferOpts(disconnectedBufferOptions)
-                    subscribeToTopic()
+                    onConnected()
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
@@ -137,7 +173,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun subscribeToTopic() {
+    fun onConnected() {
+        mqttsend_fullreport()
+
         try {
             mClient!!.subscribe(subscriptionTopic, 0, null, object: IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
@@ -154,7 +192,51 @@ class MainActivity : AppCompatActivity() {
 
             mClient!!.subscribe(subscriptionTopic, 0, object: IMqttMessageListener {
                 override fun messageArrived(topic: String?, message: MqttMessage?) {
-                    log("Message: $topic : ${String(message!!.payload)}")
+                    if (message == null) {
+                        loge("received null message")
+                        return
+                    }
+
+                    if (message.payload == null) {
+                        loge("received null payload")
+                        return
+                    }
+
+                    runOnUiThread {
+                        when (message.payload[0].toUByte()) {
+                            IMUCmd.IMUSTATUS.cmd -> {
+                                val status = message.payload[1].toUByte()
+                                val statuslist = ArrayList<String>()
+
+                                if ((status and IMUStatus.STANDBY.v) == IMUStatus.STANDBY.v)
+                                    statuslist.add("standby")
+                                if ((status and IMUStatus.SLOW.v) == IMUStatus.SLOW.v)
+                                    statuslist.add("slow")
+                                if ((status and IMUStatus.STILLNESS.v) == IMUStatus.STILLNESS.v)
+                                    statuslist.add("stillness")
+                                if ((status and IMUStatus.STABLE.v) == IMUStatus.STABLE.v)
+                                    statuslist.add("stable")
+                                if ((status and IMUStatus.TRANSIENT.v) == IMUStatus.TRANSIENT.v)
+                                    statuslist.add("transient")
+                                if ((status and IMUStatus.UNRELIABLE.v) == IMUStatus.UNRELIABLE.v)
+                                    statuslist.add("unreliable")
+                                if ((status and IMUStatus.R1.v) == IMUStatus.R1.v)
+                                    statuslist.add("r1")
+                                if ((status and IMUStatus.R2.v) == IMUStatus.R2.v)
+                                    statuslist.add("r2")
+
+                                val statusString = statuslist.joinToString ()
+                                log("new status: $statusString")
+                                mTvStatus?.text = statusString
+                            }
+                            IMUCmd.FILENAME.cmd -> {
+                                val filename = String(message.payload.drop(1).toByteArray())
+                                log("new filename: $filename")
+                                mTvFilename?.text = filename
+                            }
+                            else -> loge("unsupported cmd ${message.payload[0]}")
+                        }
+                    }
                 }
 
             })
@@ -165,10 +247,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun publishMessage() {
+    private fun mqttsend_fullreport() {
+        mqttsend_raw(byteArrayOf(IMUCmd.FULLREPORT.cmd.toByte()))
+    }
+
+    private fun mqttsend_enabled(enabled : Boolean) {
+        mqttsend_raw(byteArrayOf(IMUCmd.FULLREPORT.cmd.toByte(), if (enabled) 0x01 else 0x00))
+    }
+
+
+    private fun mqttsend_raw(_payload: ByteArray) {
+        var debugstr = ""
+        for (b in _payload) {
+            debugstr += String.format("%02X", b)
+        }
+        log("send: $debugstr")
+
         try {
             val msg = MqttMessage().apply {
-                payload = publishMessage.toByteArray()
+                payload = _payload
             }
             mClient!!.publish(publishTopic, msg)
             log("message published")
@@ -217,7 +314,7 @@ class MainActivity : AppCompatActivity() {
             else -> Color.WHITE
         }
 
-        runOnUiThread({ mHistoryAdapter?.add(text, color) })
+        runOnUiThread { mHistoryAdapter?.add(text, color) }
     }
 
     private fun loge(text: String) {
