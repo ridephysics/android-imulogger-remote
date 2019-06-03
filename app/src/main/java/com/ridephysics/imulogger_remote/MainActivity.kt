@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
     val publishTopic = "/imulogger/ctrl"
     val publishMessage = "Hello World!"
 
-    var mClient:MqttAndroidClient? = null
+    private var mClient:MqttAndroidClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
