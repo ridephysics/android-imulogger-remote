@@ -11,10 +11,10 @@ import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 
 class MainActivity : AppCompatActivity() {
-    val serverUri = "tcp://iot.eclipse.org:1883"
-    val clientId = "ExampleAndroidClient"
-    val subscriptionTopic = "exampleAndroidTopic"
-    val publishTopic = "exampleAndroidPublishTopic"
+    val serverUri = "tcp://localhost:1883"
+    val clientId = "imulogger-android-remote"
+    val subscriptionTopic = "/imulogger/status"
+    val publishTopic = "/imulogger/ctrl"
     val publishMessage = "Hello World!"
 
     var mClient:MqttAndroidClient? = null
