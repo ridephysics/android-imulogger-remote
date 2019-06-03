@@ -20,6 +20,7 @@ import org.eclipse.paho.client.mqttv3.*
 import android.support.v7.app.AlertDialog
 import android.widget.LinearLayout
 import android.widget.EditText
+import kotlinx.android.synthetic.main.content_main.*
 
 @ExperimentalUnsignedTypes
 class MainActivity : AppCompatActivity() {
@@ -106,11 +107,9 @@ class MainActivity : AppCompatActivity() {
         mTvStatus = setupStatusInfo(R.id.status, "Status")
         mTvFilename = setupStatusInfo(R.id.filename, "Filename")
 
-        val recyclerView = findViewById<RecyclerView>(R.id.history)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
         mHistoryAdapter = HistoryAdapter()
-        recyclerView.adapter = mHistoryAdapter
+        history.layoutManager = LinearLayoutManager(this)
+        history.adapter = mHistoryAdapter
 
         mClient = MqttAndroidClient(applicationContext, serverUri, clientId)
         mClient!!.setCallback(object: MqttCallbackExtended {
