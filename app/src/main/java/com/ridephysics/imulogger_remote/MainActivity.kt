@@ -173,6 +173,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        mClient?.disconnect()
+        mClient?.unregisterResources()
+        mClient?.setCallback(null)
+    }
+
     fun onConnected() {
         mqttsend_fullreport()
 
