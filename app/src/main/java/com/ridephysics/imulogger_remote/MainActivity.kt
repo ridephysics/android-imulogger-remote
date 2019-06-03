@@ -112,10 +112,6 @@ class MainActivity : AppCompatActivity() {
         mHistoryAdapter = HistoryAdapter()
         recyclerView.adapter = mHistoryAdapter
 
-        fab.setOnClickListener { view ->
-            //publishMessage()
-        }
-
         mClient = MqttAndroidClient(applicationContext, serverUri, clientId)
         mClient!!.setCallback(object: MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String?) {
@@ -214,6 +210,28 @@ class MainActivity : AppCompatActivity() {
 
                     runOnUiThread {
                         when (message.payload[0].toUByte()) {
+                            IMUCmd.ENABLED.cmd -> {
+                                val enabled = message.payload[1].toUByte()
+
+                                log("enable-status: $enabled")
+
+                                fab.show()
+                                if (enabled == 0x00u.toUByte()) {
+                                    fab.setImageResource(android.R.drawable.ic_media_play)
+
+                                    fab.setOnClickListener { view ->
+                                        mqttsend_enabled(true)
+                                    }
+                                }
+                                else {
+                                    fab.setImageResource(R.drawable.ic_stop_black_24dp)
+
+                                    fab.setOnClickListener { view ->
+                                        mqttsend_enabled(false)
+                                    }
+                                }
+                            }
+
                             IMUCmd.IMUSTATUS.cmd -> {
                                 val status = message.payload[1].toUByte()
                                 val statuslist = ArrayList<String>()
