@@ -1,5 +1,8 @@
 package com.ridephysics.imulogger_remote
 
+import android.content.Context
+import android.net.nsd.NsdManager
+import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -18,11 +21,47 @@ class MainActivity : AppCompatActivity() {
     val publishMessage = "Hello World!"
 
     private var mClient:MqttAndroidClient? = null
+    private var mServiceName: String? = null
+    private var mNdsManager: NsdManager? = null
+
+    private val registrationListener = object : NsdManager.RegistrationListener {
+
+        override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
+            mServiceName = NsdServiceInfo.serviceName
+        }
+
+        override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+            Log.e("IMULOGGER", "mDNS registration failed: $errorCode")
+        }
+
+        override fun onServiceUnregistered(arg0: NsdServiceInfo) {
+            Log.e("IMULOGGER", "mDNS service unregistered")
+        }
+
+        override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+            Log.e("IMULOGGER", "mDNS unregistration failed: $errorCode")
+        }
+    }
+
+    fun registerService() {
+        // we're running a mosquitto mqtt broker inside Termux
+        // let this app advertize it to the network
+        val serviceInfo = NsdServiceInfo().apply {
+            serviceName = "imulogger-mqtt-broker"
+            serviceType = "_imulogger_mqtt_broker._tcp"
+            setPort(1883)
+        }
+
+        mNdsManager = (getSystemService(Context.NSD_SERVICE) as NsdManager).apply {
+            registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+        registerService()
 
         fab.setOnClickListener { view ->
             publishMessage()
