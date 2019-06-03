@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         val serviceInfo = NsdServiceInfo().apply {
             serviceName = "imulogger-mqtt-broker"
             serviceType = "_imulogger_mqtt_broker._tcp"
-            setPort(1883)
+            port = 1883
         }
 
         mNdsManager = (getSystemService(Context.NSD_SERVICE) as NsdManager).apply {
