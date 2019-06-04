@@ -7,7 +7,6 @@ import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -21,6 +20,12 @@ import android.support.v7.app.AlertDialog
 import android.widget.LinearLayout
 import android.widget.EditText
 import kotlinx.android.synthetic.main.content_main.*
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
+
 
 @ExperimentalUnsignedTypes
 class MainActivity : AppCompatActivity() {
@@ -35,12 +40,14 @@ class MainActivity : AppCompatActivity() {
     private var mHistoryAdapter: HistoryAdapter? = null
     private var mTvStatus: TextView? = null
     private var mTvFilename: TextView? = null
+    private var mTvsamplerate: TextView? = null
 
     enum class IMUCmd(val cmd: UByte) {
         FULLREPORT(0x00u),
         FILENAME(0x01u),
         ENABLED(0x02u),
         IMUSTATUS(0x03u),
+        SAMPLERATE(0x04u),
     }
 
     enum class IMUStatus(val v: UByte) {
@@ -106,6 +113,7 @@ class MainActivity : AppCompatActivity() {
 
         mTvStatus = setupStatusInfo(R.id.status, "Status")
         mTvFilename = setupStatusInfo(R.id.filename, "Filename")
+        mTvsamplerate = setupStatusInfo(R.id.samplerate, "Samplerate")
 
         mHistoryAdapter = HistoryAdapter()
         history.layoutManager = LinearLayoutManager(this)
@@ -260,6 +268,15 @@ class MainActivity : AppCompatActivity() {
                                 val filename = String(message.payload.drop(1).toByteArray())
                                 log("new filename: $filename")
                                 mTvFilename?.text = filename
+                            }
+                            IMUCmd.SAMPLERATE.cmd -> {
+                                val samplerate = ByteBuffer.wrap(message.payload.drop(1).toByteArray()).order(ByteOrder.LITTLE_ENDIAN).int
+                                log("new samplerate: $samplerate")
+
+                                val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
+                                val currentDate = sdf.format(Date())
+
+                                mTvsamplerate?.text = "$samplerate ($currentDate)"
                             }
                             else -> loge("unsupported cmd ${message.payload[0]}")
                         }
