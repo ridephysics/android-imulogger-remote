@@ -283,7 +283,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mqttsend_enabled(enabled : Boolean) {
-        mqttsend_raw(byteArrayOf(IMUCmd.FULLREPORT.cmd.toByte(), if (enabled) 0x01 else 0x00))
+        mqttsend_raw(byteArrayOf(IMUCmd.ENABLED.cmd.toByte(), if (enabled) 0x01 else 0x00))
     }
 
 
