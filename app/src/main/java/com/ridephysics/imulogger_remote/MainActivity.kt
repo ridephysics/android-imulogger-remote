@@ -390,7 +390,13 @@ class MainActivity : AppCompatActivity() {
             else -> Color.WHITE
         }
 
-        runOnUiThread { mHistoryAdapter?.add(text, color) }
+
+        runOnUiThread {
+            mHistoryAdapter!!.add(text, color)
+
+            if (!history.canScrollVertically(0))
+                history.scrollToPosition(mHistoryAdapter!!.itemCount - 1)
+        }
     }
 
     private fun loge(text: String) {
