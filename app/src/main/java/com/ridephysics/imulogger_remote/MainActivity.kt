@@ -347,6 +347,7 @@ class MainActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.MATCH_PARENT
                 )
+                input.setText("/sdcard/");
 
                 alertDialog.apply {
                     setTitle("Filename")
