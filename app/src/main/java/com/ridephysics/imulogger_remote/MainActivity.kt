@@ -17,6 +17,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import android.support.v7.app.AlertDialog
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.EditText
 import kotlinx.android.synthetic.main.content_main.*
@@ -367,6 +368,15 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_refresh -> {
                 mqttsend_fullreport();
+                true
+            }
+            R.id.action_toggle_console -> {
+                history.visibility = when (history.visibility) {
+                    View.GONE -> View.VISIBLE
+                    View.INVISIBLE-> View.VISIBLE
+                    View.VISIBLE -> View.GONE
+                    else -> View.GONE
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)

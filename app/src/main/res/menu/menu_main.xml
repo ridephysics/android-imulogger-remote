@@ -11,4 +11,9 @@
           android:title="@string/action_refresh"
           android:orderInCategory="100"
           app:showAsAction="never"/>
+
+    <item android:id="@+id/action_toggle_console"
+          android:title="@string/action_toggle_console"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
 </menu>
