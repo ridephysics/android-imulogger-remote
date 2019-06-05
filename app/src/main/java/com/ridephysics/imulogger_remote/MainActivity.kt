@@ -226,6 +226,7 @@ class MainActivity : AppCompatActivity() {
                                 fab.show()
                                 if (enabled == 0x00u.toUByte()) {
                                     fab.setImageResource(android.R.drawable.ic_media_play)
+                                    statuscolor.setBackgroundColor(Color.parseColor("#ff0000"))
 
                                     fab.setOnClickListener { view ->
                                         mqttsend_enabled(true)
@@ -233,6 +234,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 else {
                                     fab.setImageResource(R.drawable.ic_stop_black_24dp)
+                                    statuscolor.setBackgroundColor(Color.parseColor("#00ff00"))
 
                                     fab.setOnClickListener { view ->
                                         mqttsend_enabled(false)
