@@ -383,7 +383,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_refresh -> {
-                mqttsend_fullreport();
+                mqttsend_fullreport()
                 true
             }
             R.id.action_toggle_console -> {
