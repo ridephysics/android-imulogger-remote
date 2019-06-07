@@ -33,11 +33,19 @@
              app:layout_constraintLeft_toLeftOf="parent"
     />
 
+    <include layout="@layout/status"
+             android:id="@+id/sdcardstatus"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             app:layout_constraintTop_toBottomOf="@id/samplerate"
+             app:layout_constraintLeft_toLeftOf="parent"
+    />
+
     <View
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/samplerate"
+            app:layout_constraintTop_toBottomOf="@id/sdcardstatus"
             android:id="@+id/statuscolor"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -51,7 +59,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/samplerate"
+            app:layout_constraintTop_toBottomOf="@id/sdcardstatus"
             android:padding="8dp"
             android:clipToPadding="false"
             android:scrollbars="vertical"

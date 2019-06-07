@@ -42,6 +42,9 @@ class MainActivity : AppCompatActivity() {
     private var mTvStatus: TextView? = null
     private var mTvFilename: TextView? = null
     private var mTvsamplerate: TextView? = null
+    private var mTvSdcardStatus: TextView? = null
+
+    private var mSdcardRefed: Boolean = false
 
     enum class IMUCmd(val cmd: UByte) {
         FULLREPORT(0x00u),
@@ -49,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         ENABLED(0x02u),
         IMUSTATUS(0x03u),
         SAMPLERATE(0x04u),
+        SDCARD(0x05u),
     }
 
     enum class IMUStatus(val v: UByte) {
@@ -115,6 +119,7 @@ class MainActivity : AppCompatActivity() {
         mTvStatus = setupStatusInfo(R.id.status, "Status")
         mTvFilename = setupStatusInfo(R.id.filename, "Filename")
         mTvsamplerate = setupStatusInfo(R.id.samplerate, "Samplerate")
+        mTvSdcardStatus = setupStatusInfo(R.id.sdcardstatus, "SDCARD")
 
         mHistoryAdapter = HistoryAdapter()
         history.layoutManager = LinearLayoutManager(this)
@@ -281,6 +286,11 @@ class MainActivity : AppCompatActivity() {
 
                                 mTvsamplerate?.text = "$samplerate ($currentDate)"
                             }
+                            IMUCmd.SDCARD.cmd -> {
+                                val refed = message.payload[1].toUByte()
+                                mTvSdcardStatus?.text = if (refed != 0x00u.toUByte()) "refed" else "not refed"
+                                mSdcardRefed = if (refed != 0x00u.toUByte()) true else false
+                            }
                             else -> loge("unsupported cmd ${message.payload[0]}")
                         }
                     }
@@ -304,6 +314,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun mqttsend_enabled(enabled : Boolean) {
         mqttsend_raw(byteArrayOf(IMUCmd.ENABLED.cmd.toByte(), if (enabled) 0x01 else 0x00))
+    }
+
+    private fun mqttsend_sdcard_refed(refed : Boolean) {
+        mqttsend_raw(byteArrayOf(IMUCmd.SDCARD.cmd.toByte(), if (refed) 0x01 else 0x00))
     }
 
 
@@ -379,6 +393,10 @@ class MainActivity : AppCompatActivity() {
                     View.VISIBLE -> View.GONE
                     else -> View.GONE
                 }
+                true
+            }
+            R.id.action_toggle_sdcard -> {
+                mqttsend_sdcard_refed(!mSdcardRefed)
                 true
             }
             else -> super.onOptionsItemSelected(item)

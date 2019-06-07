@@ -3,4 +3,5 @@
     <string name="action_filename">Filename</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_toggle_console">Toggle console</string>
+    <string name="action_toggle_sdcard">Toggle sdcard</string>
 </resources>
