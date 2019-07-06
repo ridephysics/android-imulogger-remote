@@ -21,4 +21,9 @@
           android:title="@string/action_toggle_sdcard"
           android:orderInCategory="100"
           app:showAsAction="never"/>
+
+    <item android:id="@+id/action_toggle_broadcast"
+          android:title="@string/action_toggle_broadcast"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
 </menu>

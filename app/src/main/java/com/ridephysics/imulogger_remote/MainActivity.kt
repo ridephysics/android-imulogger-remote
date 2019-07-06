@@ -43,8 +43,10 @@ class MainActivity : AppCompatActivity() {
     private var mTvFilename: TextView? = null
     private var mTvsamplerate: TextView? = null
     private var mTvSdcardStatus: TextView? = null
+    private var mTvBroadcast: TextView? = null
 
     private var mSdcardRefed: Boolean = false
+    private var mBroadcastEnabled: Boolean = false
 
     enum class IMUCmd(val cmd: UByte) {
         FULLREPORT(0x00u),
@@ -53,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         IMUSTATUS(0x03u),
         SAMPLERATE(0x04u),
         SDCARD(0x05u),
+        BROADCAST(0x06u),
     }
 
     enum class IMUStatus(val v: UByte) {
@@ -120,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         mTvFilename = setupStatusInfo(R.id.filename, "Filename")
         mTvsamplerate = setupStatusInfo(R.id.samplerate, "Samplerate")
         mTvSdcardStatus = setupStatusInfo(R.id.sdcardstatus, "SDCARD")
+        mTvBroadcast = setupStatusInfo(R.id.broadcast, "Broadcast")
 
         mHistoryAdapter = HistoryAdapter()
         history.layoutManager = LinearLayoutManager(this)
@@ -292,6 +296,12 @@ class MainActivity : AppCompatActivity() {
                                 mTvSdcardStatus?.text = if (refed != 0x00u.toUByte()) "refed" else "not refed"
                                 mSdcardRefed = if (refed != 0x00u.toUByte()) true else false
                             }
+                            IMUCmd.BROADCAST.cmd -> {
+                                val broadcast = message.payload[1].toUByte()
+                                log("broadcast: $broadcast")
+                                mTvBroadcast?.text = if (broadcast != 0x00u.toUByte()) "enabled" else "disabled"
+                                mBroadcastEnabled = if (broadcast != 0x00u.toUByte()) true else false
+                            }
                             else -> loge("unsupported cmd ${message.payload[0]}")
                         }
                     }
@@ -319,6 +329,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun mqttsend_sdcard_refed(refed : Boolean) {
         mqttsend_raw(byteArrayOf(IMUCmd.SDCARD.cmd.toByte(), if (refed) 0x01 else 0x00))
+    }
+
+    private fun mqttsend_broadcast(broadcast : Boolean) {
+        mqttsend_raw(byteArrayOf(IMUCmd.BROADCAST.cmd.toByte(), if (broadcast) 0x01 else 0x00))
     }
 
 
@@ -398,6 +412,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_toggle_sdcard -> {
                 mqttsend_sdcard_refed(!mSdcardRefed)
+                true
+            }
+            R.id.action_toggle_broadcast -> {
+                mqttsend_broadcast(!mBroadcastEnabled)
                 true
             }
             else -> super.onOptionsItemSelected(item)
