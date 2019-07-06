@@ -288,6 +288,7 @@ class MainActivity : AppCompatActivity() {
                             }
                             IMUCmd.SDCARD.cmd -> {
                                 val refed = message.payload[1].toUByte()
+                                log("sdcard: refed=$refed")
                                 mTvSdcardStatus?.text = if (refed != 0x00u.toUByte()) "refed" else "not refed"
                                 mSdcardRefed = if (refed != 0x00u.toUByte()) true else false
                             }
