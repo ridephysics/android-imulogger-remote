@@ -19,6 +19,6 @@
             android:id="@+id/text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ligula libero, eleifend sit amet risus ac, blandit iaculis orci. Proin." />
+            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit." />
 
 </LinearLayout>
