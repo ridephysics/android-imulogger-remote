@@ -5,22 +5,21 @@ import android.graphics.Color
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
+import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.TextView
 
-import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
-import android.support.v7.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.EditText
-import kotlinx.android.synthetic.main.content_main.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.ridephysics.imulogger_remote.databinding.ActivityMainBinding
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.text.SimpleDateFormat
@@ -30,6 +29,8 @@ import kotlin.collections.ArrayList
 
 @ExperimentalUnsignedTypes
 class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
+
     private val serverUri = "tcp://localhost:1883"
     private val clientId = "imulogger-android-remote"
     private val subscriptionTopic = "/imulogger/status"
@@ -115,8 +116,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        setSupportActionBar(toolbar)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+        setSupportActionBar(binding.toolbar)
         registerService()
 
         mTvStatus = setupStatusInfo(R.id.status, "Status")
@@ -126,8 +129,8 @@ class MainActivity : AppCompatActivity() {
         mTvBroadcast = setupStatusInfo(R.id.broadcast, "Broadcast")
 
         mHistoryAdapter = HistoryAdapter()
-        history.layoutManager = LinearLayoutManager(this)
-        history.adapter = mHistoryAdapter
+        binding.contentMain.history.layoutManager = LinearLayoutManager(this)
+        binding.contentMain.history.adapter = mHistoryAdapter
 
         mClient = MqttAndroidClient(applicationContext, serverUri, clientId)
         mClient!!.setCallback(object: MqttCallbackExtended {
@@ -232,20 +235,20 @@ class MainActivity : AppCompatActivity() {
 
                                 log("enable-status: $enabled")
 
-                                fab.show()
+                                binding.fab.show()
                                 if (enabled == 0x00u.toUByte()) {
-                                    fab.setImageResource(android.R.drawable.ic_media_play)
-                                    statuscolor.setBackgroundColor(Color.parseColor("#ff0000"))
+                                    binding.fab.setImageResource(android.R.drawable.ic_media_play)
+                                    binding.contentMain.statuscolor.setBackgroundColor(Color.parseColor("#ff0000"))
 
-                                    fab.setOnClickListener { view ->
+                                    binding.fab.setOnClickListener { view ->
                                         mqttsend_enabled(true)
                                     }
                                 }
                                 else {
-                                    fab.setImageResource(R.drawable.ic_stop_black_24dp)
-                                    statuscolor.setBackgroundColor(Color.parseColor("#00ff00"))
+                                    binding.fab.setImageResource(R.drawable.ic_stop_black_24dp)
+                                    binding.contentMain.statuscolor.setBackgroundColor(Color.parseColor("#00ff00"))
 
-                                    fab.setOnClickListener { view ->
+                                    binding.fab.setOnClickListener { view ->
                                         mqttsend_enabled(false)
                                     }
                                 }
@@ -402,7 +405,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_toggle_console -> {
-                history.visibility = when (history.visibility) {
+                binding.contentMain.history.visibility = when (binding.contentMain.history.visibility) {
                     View.GONE -> View.VISIBLE
                     View.INVISIBLE-> View.VISIBLE
                     View.VISIBLE -> View.GONE
@@ -444,8 +447,8 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             mHistoryAdapter!!.add(text, color)
 
-            if (!history.canScrollVertically(0))
-                history.scrollToPosition(mHistoryAdapter!!.itemCount - 1)
+            if (!binding.contentMain.history.canScrollVertically(0))
+                binding.contentMain.history.scrollToPosition(mHistoryAdapter!!.itemCount - 1)
         }
     }
 
