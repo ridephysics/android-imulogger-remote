@@ -1,78 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+    tools:context=".MainActivity"
+    tools:showIn="@layout/activity_main">
+
+    <include
+        android:id="@+id/status"
+        layout="@layout/status"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-        tools:showIn="@layout/activity_main"
-        tools:context=".MainActivity">
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <include layout="@layout/status"
-             android:id="@+id/status"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             app:layout_constraintTop_toTopOf="parent"
-             app:layout_constraintLeft_toLeftOf="parent"
-    />
+    <include
+        android:id="@+id/filename"
+        layout="@layout/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/status" />
 
-    <include layout="@layout/status"
-             android:id="@+id/filename"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             app:layout_constraintTop_toBottomOf="@id/status"
-             app:layout_constraintLeft_toLeftOf="parent"
-             />
+    <include
+        android:id="@+id/samplerate"
+        layout="@layout/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/filename" />
 
-    <include layout="@layout/status"
-             android:id="@+id/samplerate"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             app:layout_constraintTop_toBottomOf="@id/filename"
-             app:layout_constraintLeft_toLeftOf="parent"
-    />
+    <include
+        android:id="@+id/sdcardstatus"
+        layout="@layout/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/samplerate" />
 
-    <include layout="@layout/status"
-             android:id="@+id/sdcardstatus"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             app:layout_constraintTop_toBottomOf="@id/samplerate"
-             app:layout_constraintLeft_toLeftOf="parent"
-    />
-
-    <include layout="@layout/status"
-             android:id="@+id/broadcast"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             app:layout_constraintTop_toBottomOf="@id/sdcardstatus"
-             app:layout_constraintLeft_toLeftOf="parent"
-    />
+    <include
+        android:id="@+id/broadcast"
+        layout="@layout/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sdcardstatus" />
 
     <View
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/broadcast"
-            android:id="@+id/statuscolor"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="#ffffff"
-            />
+        android:id="@+id/statuscolor"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#ffffff"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/broadcast" />
 
     <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/history"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/broadcast"
-            android:padding="8dp"
-            android:clipToPadding="false"
-            android:scrollbars="vertical"
-            android:scrollbarStyle="outsideOverlay"
-            android:background="#000000"
-            android:scrollbarThumbVertical="@drawable/scrollbar"/>
+        android:id="@+id/history"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#000000"
+        android:clipToPadding="false"
+        android:padding="8dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbarThumbVertical="@drawable/scrollbar"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/broadcast" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

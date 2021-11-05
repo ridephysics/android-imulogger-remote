@@ -8,7 +8,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 
-class HistoryAdapter(private val history: ArrayList<HistoryItem> = ArrayList()) : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
+class HistoryAdapter(private val history: ArrayList<HistoryItem> = ArrayList()) :
+    RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
 
     data class HistoryItem(val text: String, val color: Int = Color.WHITE)
 
@@ -31,7 +32,7 @@ class HistoryAdapter(private val history: ArrayList<HistoryItem> = ArrayList()) 
         this.notifyDataSetChanged()
     }
 
-    fun add(text: String, color:Int = Color.WHITE) {
+    fun add(text: String, color: Int = Color.WHITE) {
         this.add(HistoryItem(text, color))
     }
 

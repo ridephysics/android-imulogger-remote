@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private val subscriptionTopic = "/imulogger/status"
     private val publishTopic = "/imulogger/ctrl"
 
-    private var mClient:MqttAndroidClient? = null
+    private var mClient: MqttAndroidClient? = null
     private var mServiceName: String? = null
     private var mNdsManager: NsdManager? = null
     private var mHistoryAdapter: HistoryAdapter? = null
@@ -133,13 +133,12 @@ class MainActivity : AppCompatActivity() {
         binding.contentMain.history.adapter = mHistoryAdapter
 
         mClient = MqttAndroidClient(applicationContext, serverUri, clientId)
-        mClient!!.setCallback(object: MqttCallbackExtended {
+        mClient!!.setCallback(object : MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String?) {
                 if (reconnect) {
                     log("Reconnected to $serverURI")
                     onConnected()
-                }
-                else {
+                } else {
                     log("Connected to $serverURI")
                 }
             }
@@ -185,8 +184,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
             })
-        }
-        catch (e:MqttException) {
+        } catch (e: MqttException) {
             e.printStackTrace()
             loge(Log.getStackTraceString(e))
         }
@@ -203,7 +201,7 @@ class MainActivity : AppCompatActivity() {
         mqttsend_fullreport()
 
         try {
-            mClient!!.subscribe(subscriptionTopic, 0, null, object: IMqttActionListener {
+            mClient!!.subscribe(subscriptionTopic, 0, null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
                     log("subscribed")
                 }
@@ -216,7 +214,7 @@ class MainActivity : AppCompatActivity() {
 
             })
 
-            mClient!!.subscribe(subscriptionTopic, 0, object: IMqttMessageListener {
+            mClient!!.subscribe(subscriptionTopic, 0, object : IMqttMessageListener {
                 override fun messageArrived(topic: String?, message: MqttMessage?) {
                     if (message == null) {
                         loge("received null message")
@@ -238,15 +236,22 @@ class MainActivity : AppCompatActivity() {
                                 binding.fab.show()
                                 if (enabled == 0x00u.toUByte()) {
                                     binding.fab.setImageResource(android.R.drawable.ic_media_play)
-                                    binding.contentMain.statuscolor.setBackgroundColor(Color.parseColor("#ff0000"))
+                                    binding.contentMain.statuscolor.setBackgroundColor(
+                                        Color.parseColor(
+                                            "#ff0000"
+                                        )
+                                    )
 
                                     binding.fab.setOnClickListener { view ->
                                         mqttsend_enabled(true)
                                     }
-                                }
-                                else {
+                                } else {
                                     binding.fab.setImageResource(R.drawable.ic_stop_black_24dp)
-                                    binding.contentMain.statuscolor.setBackgroundColor(Color.parseColor("#00ff00"))
+                                    binding.contentMain.statuscolor.setBackgroundColor(
+                                        Color.parseColor(
+                                            "#00ff00"
+                                        )
+                                    )
 
                                     binding.fab.setOnClickListener { view ->
                                         mqttsend_enabled(false)
@@ -275,7 +280,7 @@ class MainActivity : AppCompatActivity() {
                                 if ((status and IMUStatus.R2.v) == IMUStatus.R2.v)
                                     statuslist.add("r2")
 
-                                val statusString = statuslist.joinToString ()
+                                val statusString = statuslist.joinToString()
                                 log("new status: $statusString")
                                 mTvStatus?.text = statusString
                             }
@@ -285,7 +290,9 @@ class MainActivity : AppCompatActivity() {
                                 mTvFilename?.text = filename
                             }
                             IMUCmd.SAMPLERATE.cmd -> {
-                                val samplerate = ByteBuffer.wrap(message.payload.drop(1).toByteArray()).order(ByteOrder.LITTLE_ENDIAN).int
+                                val samplerate =
+                                    ByteBuffer.wrap(message.payload.drop(1).toByteArray())
+                                        .order(ByteOrder.LITTLE_ENDIAN).int
                                 log("new samplerate: $samplerate")
 
                                 val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
@@ -296,14 +303,17 @@ class MainActivity : AppCompatActivity() {
                             IMUCmd.SDCARD.cmd -> {
                                 val refed = message.payload[1].toUByte()
                                 log("sdcard: refed=$refed")
-                                mTvSdcardStatus?.text = if (refed != 0x00u.toUByte()) "refed" else "not refed"
+                                mTvSdcardStatus?.text =
+                                    if (refed != 0x00u.toUByte()) "refed" else "not refed"
                                 mSdcardRefed = if (refed != 0x00u.toUByte()) true else false
                             }
                             IMUCmd.BROADCAST.cmd -> {
                                 val broadcast = message.payload[1].toUByte()
                                 log("broadcast: $broadcast")
-                                mTvBroadcast?.text = if (broadcast != 0x00u.toUByte()) "enabled" else "disabled"
-                                mBroadcastEnabled = if (broadcast != 0x00u.toUByte()) true else false
+                                mTvBroadcast?.text =
+                                    if (broadcast != 0x00u.toUByte()) "enabled" else "disabled"
+                                mBroadcastEnabled =
+                                    if (broadcast != 0x00u.toUByte()) true else false
                             }
                             else -> loge("unsupported cmd ${message.payload[0]}")
                         }
@@ -311,8 +321,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
             })
-        }
-        catch (e:MqttException) {
+        } catch (e: MqttException) {
             e.printStackTrace()
             loge(Log.getStackTraceString(e))
         }
@@ -326,15 +335,15 @@ class MainActivity : AppCompatActivity() {
         mqttsend_raw(byteArrayOf(IMUCmd.FILENAME.cmd.toByte()) + name.toByteArray())
     }
 
-    private fun mqttsend_enabled(enabled : Boolean) {
+    private fun mqttsend_enabled(enabled: Boolean) {
         mqttsend_raw(byteArrayOf(IMUCmd.ENABLED.cmd.toByte(), if (enabled) 0x01 else 0x00))
     }
 
-    private fun mqttsend_sdcard_refed(refed : Boolean) {
+    private fun mqttsend_sdcard_refed(refed: Boolean) {
         mqttsend_raw(byteArrayOf(IMUCmd.SDCARD.cmd.toByte(), if (refed) 0x01 else 0x00))
     }
 
-    private fun mqttsend_broadcast(broadcast : Boolean) {
+    private fun mqttsend_broadcast(broadcast: Boolean) {
         mqttsend_raw(byteArrayOf(IMUCmd.BROADCAST.cmd.toByte(), if (broadcast) 0x01 else 0x00))
     }
 
@@ -356,8 +365,7 @@ class MainActivity : AppCompatActivity() {
             if (!mClient!!.isConnected) {
                 log("${mClient!!.bufferedMessageCount} messages in buffer")
             }
-        }
-        catch (e:MqttException) {
+        } catch (e: MqttException) {
             e.printStackTrace()
             loge(Log.getStackTraceString(e))
         }
@@ -388,13 +396,17 @@ class MainActivity : AppCompatActivity() {
                     setTitle("Filename")
                     setMessage("Enter the new filename")
                     setView(input)
-                    setButton(AlertDialog.BUTTON_NEGATIVE, "CANCEL") { dialog, which -> run {
-                        dialog.dismiss()
-                    }}
-                    setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, which -> run {
-                        mqttsend_filename(input.text.toString())
-                        dialog.dismiss()
-                    }}
+                    setButton(AlertDialog.BUTTON_NEGATIVE, "CANCEL") { dialog, which ->
+                        run {
+                            dialog.dismiss()
+                        }
+                    }
+                    setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, which ->
+                        run {
+                            mqttsend_filename(input.text.toString())
+                            dialog.dismiss()
+                        }
+                    }
                     show()
                 }
 
@@ -405,12 +417,13 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_toggle_console -> {
-                binding.contentMain.history.visibility = when (binding.contentMain.history.visibility) {
-                    View.GONE -> View.VISIBLE
-                    View.INVISIBLE-> View.VISIBLE
-                    View.VISIBLE -> View.GONE
-                    else -> View.GONE
-                }
+                binding.contentMain.history.visibility =
+                    when (binding.contentMain.history.visibility) {
+                        View.GONE -> View.VISIBLE
+                        View.INVISIBLE -> View.VISIBLE
+                        View.VISIBLE -> View.GONE
+                        else -> View.GONE
+                    }
                 true
             }
             R.id.action_toggle_sdcard -> {
@@ -427,17 +440,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun aloglevel(level: Int, text: String) {
         val tag = "IMULOGGER"
-        when(level) {
+        when (level) {
             Log.ERROR -> Log.e(tag, text)
             Log.WARN -> Log.w(tag, text)
             else -> Log.i(tag, text)
         }
     }
 
-    private fun log(text: String, level:Int = Log.INFO) {
+    private fun log(text: String, level: Int = Log.INFO) {
         aloglevel(level, text)
 
-        val color = when(level) {
+        val color = when (level) {
             Log.ERROR -> Color.parseColor("#F44336")
             Log.WARN -> Color.parseColor("#FFEB3B")
             else -> Color.WHITE
