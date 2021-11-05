@@ -242,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                                         )
                                     )
 
-                                    binding.fab.setOnClickListener { view ->
+                                    binding.fab.setOnClickListener { _ ->
                                         mqttsend_enabled(true)
                                     }
                                 } else {
@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
                                         )
                                     )
 
-                                    binding.fab.setOnClickListener { view ->
+                                    binding.fab.setOnClickListener { _ ->
                                         mqttsend_enabled(false)
                                     }
                                 }
@@ -396,12 +396,12 @@ class MainActivity : AppCompatActivity() {
                     setTitle("Filename")
                     setMessage("Enter the new filename")
                     setView(input)
-                    setButton(AlertDialog.BUTTON_NEGATIVE, "CANCEL") { dialog, which ->
+                    setButton(AlertDialog.BUTTON_NEGATIVE, "CANCEL") { dialog, _ ->
                         run {
                             dialog.dismiss()
                         }
                     }
-                    setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, which ->
+                    setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, _ ->
                         run {
                             mqttsend_filename(input.text.toString())
                             dialog.dismiss()
