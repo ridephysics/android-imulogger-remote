@@ -5,21 +5,20 @@ import android.graphics.Color
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.ViewGroup
-import android.widget.TextView
-
-import org.eclipse.paho.android.service.MqttAndroidClient
-import org.eclipse.paho.client.mqttv3.*
-import androidx.appcompat.app.AlertDialog
 import android.view.View
-import android.widget.LinearLayout
+import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ridephysics.imulogger_remote.databinding.ActivityMainBinding
+import info.mqtt.android.service.MqttAndroidClient
+import org.eclipse.paho.client.mqttv3.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.text.SimpleDateFormat
@@ -194,7 +193,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         mClient?.disconnect()
         mClient?.unregisterResources()
-        mClient?.setCallback(null)
     }
 
     fun onConnected() {
